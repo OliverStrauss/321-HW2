@@ -110,11 +110,15 @@ public class Dissasembler {
     }
 
     private static void printRType(String op, int rd, int rn, int rm, int shamt) {
+       
         switch(op){
             case "LSL": case "LSR":
                 System.out.printf("%s X%d, X%d, #%d\n", op, rd, rn, shamt); break;
             case "BR": System.out.printf("BR X%d\n", rn); break;
-            case "PRNT": case "PRNL": case "DUMP": case "HALT": System.out.println(op); break;
+            case "PRNT":    
+            System.out.printf("PRNT X%d\n", rd);
+            break;
+            case "PRNL": case "DUMP": case "HALT": System.out.println(op); break;
             default: System.out.printf("%s X%d, X%d, X%d\n", op, rd, rn, rm);
         }
     }
@@ -176,7 +180,11 @@ public class Dissasembler {
 
         // SECOND PASS: decode & print
         for(int i=0;i<instructionCount;i++){
-            int inst = ((data[i*4]&0xFF)<<24)|((data[i*4+1]&0xFF)<<16)|((data[i*4+2]&0xFF)<<8)|(data[i*4+3]&0xFF);
+            int inst = ((data[i*4]&0xFF)<<24)
+         | ((data[i*4+1]&0xFF)<<16)
+         | ((data[i*4+2]&0xFF)<<8)
+         | (data[i*4+3]&0xFF); 
+
             decode(inst,i);
         }
     }
