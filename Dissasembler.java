@@ -19,6 +19,7 @@ public class Dissasembler {
         OPCODE_11.put(0b10001010000, "AND");
         OPCODE_11.put(0b11101010000, "ANDS");
         OPCODE_11.put(0b11001010000, "EOR");
+        OPCODE_11.put(0b10101010000, "ORR");
         OPCODE_11.put(0b11001011000, "SUB");
         OPCODE_11.put(0b11101011000, "SUBS");
         OPCODE_11.put(0b10011011000, "MUL");
@@ -82,14 +83,30 @@ public class Dissasembler {
 
         if (labels.containsKey(index)) System.out.println(labels.get(index) + ":");
 
-        if (OPCODE_11.containsKey(opcode11)) printRType(OPCODE_11.get(opcode11), rd, rn, rm, shamt);
-        else if (OPCODE_10.containsKey(opcode10)) printIType(OPCODE_10.get(opcode10), rd, rn, imm12);
-        else if (OPCODE_6.containsKey(opcode6)) printBType(OPCODE_6.get(opcode6), imm26, index);
-        else if (OPCODE_8.containsKey(opcode8)) {
-            if (opcode8 == 0b01010100) printBCond(index, cond, condImm19);
-            else printCBType(OPCODE_8.get(opcode8), rt, condImm19, index);
+        if (OPCODE_11.containsKey(opcode11)) {
+            String op = OPCODE_11.get(opcode11);
+            if (op.equals("LDUR") || op.equals("STUR")) {
+                printDType(op, rd, rn, inst);
+            } else {
+                printRType(op, rd, rn, rm, shamt);
+            }
+        }else if (OPCODE_10.containsKey(opcode10)) {
+            printIType(OPCODE_10.get(opcode10), rd, rn, imm12);
         }
-        else System.out.printf("Unknown instruction: 0x%08X\n", inst);
+        else if (OPCODE_6.containsKey(opcode6)){
+            printBType(OPCODE_6.get(opcode6), imm26, index);
+        } 
+        else if (OPCODE_8.containsKey(opcode8)) {
+            if (opcode8 == 0b01010100){
+                printBCond(index, cond, condImm19);
+            }
+            else {
+                printCBType(OPCODE_8.get(opcode8), rt, condImm19, index);
+            }
+        }
+        else {
+            System.out.printf("Unknown instruction: 0x%08X\n", inst);
+        }
     }
 
     private static void printRType(String op, int rd, int rn, int rm, int shamt) {
@@ -124,6 +141,14 @@ public class Dissasembler {
         int target = currentIndex + signExtend(imm26, 26);
         String label = labels.getOrDefault(target, "#" + signExtend(imm26, 26));
         System.out.printf("%s %s\n", op, label);
+    }
+
+    private static void printDType(String op, int rd, int rn, int inst) {
+        // D-type immediate is bits [20:12] (9 bits)
+        int imm9 = (inst >> 12) & 0x1FF;
+        // sign-extend it as 9 bits (if you want signed immediates)
+        int imm = signExtend(imm9, 9);
+        System.out.printf("%s X%d, [X%d, #%d]\n", op, rd, rn, imm);
     }
 
     public static void main(String[] args) throws Exception {
